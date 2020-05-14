@@ -1,6 +1,6 @@
 {
   "name": "@wodysus-ttp/blindfold",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "dependencies": {
     "@tabletop-playground/api": "^0.3.1"
   },

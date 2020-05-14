@@ -47,10 +47,7 @@ function rotateVector(vector, rotator) {
 function initialize(templateId, scriptKey, offset) {
     bId = templateId;
     key = scriptKey;
-
-    let blindfold = world.createObjectFromTemplate(bId, new Vector(0, 0, 0));
-    offVec = new Vector(0, 0, blindfold.getExtent(false).z / 2).add(offset);
-    blindfold.destroy();
+    offVec = offset;
 
     if (10 > scriptKey >= 0) {
         globalEvents.onScriptButtonReleased.add(function(player, button){
