@@ -2,8 +2,8 @@
  * A blindfold for usage with games that require discretion.
  * TTP currently has no method of concealing objects, so this script serves to allow table makers to quickly create a blindfold.
  *
- * To use, in your global script, require "@wodysus-ttp/blindfold" and run initialize(templateId, scriptKey, offset);
- * The templateId is that of whatever object you want to block players vision with, when testing I used inverted models and planes
+ * To use, in your global script, require "@wodysus-ttp/blindfold" and run initializeTemplate(templateId, scriptKey, offset) or initializeJSON(templateId, scriptKey, offset)
+ * The templateId or templateJson is that of whatever object you want to block players vision with, when testing I used inverted models and planes
  * scriptKey is the scripting button that players can press to blind or unblind themselves, invalid numbers disable this feature.
  * If you have a more complicated placement of your object, you can use offset to relocate the object.
  *
@@ -14,6 +14,7 @@
 const  {world, globalEvents, Vector, Player, GameObject, Rotator} = require("@tabletop-playground/api");
 
 let bId = "";
+let json = "";
 let key = -1;
 let offVec = new Vector(0, 0, 0);
 
@@ -39,13 +40,38 @@ function rotateVector(vector, rotator) {
 }
 
 /**
- * Initialize the module to use the supplied template Id and script key. If script key is -1, disables player toggling.
+ * Initialize the module to use the supplied template Id and script key. If script key is invalid, disables player toggling.
  * @param {string} templateId - The template id of the blindfold object.
- * @param {number} scriptKey - The number of the script key to use for player toggling. -1 to disable.
+ * @param {number} scriptKey - The number of the script key to use for player toggling. Invalid to disable.
  * @param {Vector} offset - A vector offset for the placement of the blindfold.
  */
-function initialize(templateId, scriptKey, offset) {
+function initializeTemplate(templateId, scriptKey, offset) {
     bId = templateId;
+    json = "";
+    key = scriptKey;
+    offVec = offset;
+
+    if (10 > scriptKey >= 0) {
+        globalEvents.onScriptButtonReleased.add(function(player, button){
+            if (button === scriptKey) {
+                if (toggleBlind(player)) {
+                    player.showMessage("You have blindfolded yourself.");
+                } else {
+                    player.showMessage("You have removed your blindfold.");
+                }
+            }
+        });
+    }
+}
+/**
+ * Initialize the module to use the supplied json and script key. If script key is invalid, disables player toggling.
+ * @param {string} templateJson - The json string of the blindfold object.
+ * @param {number} scriptKey - The number of the script key to use for player toggling. Invalid to disable.
+ * @param {Vector} offset - A vector offset for the placement of the blindfold.
+ */
+function initializeJSON(templateJson, scriptKey, offset) {
+    json = templateJson;
+    bId = ""
     key = scriptKey;
     offVec = offset;
 
@@ -80,9 +106,18 @@ function toggleBlind(player) {
     if (isBlind(player)) {
         player.blindfold.destroy();
         player.blindfold = null;
+
         return false;
     } else {
-        let blindfold = world.createObjectFromTemplate(bId, player.getPosition());
+        let blindfold = null;
+        if (bId !== "") {
+            blindfold = world.createObjectFromTemplate(bId, player.getPosition());
+        } else if (json !== "") {
+            blindfold = world.createObjectFromJSON(json, player.getPosition());
+        } else {
+            throw "Error: toggleBlind was called before initialization";
+        }
+
         blindfold.toggleLock();
 
         function autoclean(left){
@@ -107,6 +142,7 @@ function toggleBlind(player) {
     }
 }
 
-module.exports.initialize = initialize;
+module.exports.initializeTemplate = initializeTemplate;
+module.exports.initializeJSON = initializeJSON;
 module.exports.toggleBlind = toggleBlind;
 module.exports.isBlind = isBlind;
